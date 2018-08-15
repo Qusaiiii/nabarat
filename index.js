@@ -1,303 +1,176 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
-const ytdl = require('ytdl-core');
-const request = require('request');
-const fs = require('fs');
-const getYoutubeID = require('get-youtube-id');
-const fetchVideoInfo = require('youtube-info');
 
-const yt_api_key = "AIzaSyDeoIH0u1e72AtfpwSKKOSy3IPp2UHzqi4";
-const prefix = '1';
-client.on('ready', function() {
-    console.log(`i am ready ${client.user.username}`);
+client.on('ready', () => {
+  console.log(`Logged in as ${client.user.tag}!`);
 });
 
 
-
-var servers = [];
-var queue = [];
-var guilds = [];
-var queueNames = [];
-var isPlaying = false;
-var dispatcher = null;
-var voiceChannel = null;
-var skipReq = 0;
-var skippers = [];
-var now_playing = [];
-/*
-\\\\\\\\\\\\\\\\\\\\\\\\V/////////////////////////
-\\\\\\\\\\\\\\\\\\\\\\\\V/////////////////////////
-\\\\\\\\\\\\\\\\\\\\\\\\V/////////////////////////
-\\\\\\\\\\\\\\\\\\\\\\\\V/////////////////////////
-*/
-client.on('ready', () => {});
-var download = function(uri, filename, callback) {
-    request.head(uri, function(err, res, body) {
-        console.log('content-type:', res.headers['content-type']);
-        console.log('content-length:', res.headers['content-length']);
-
-        request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
-    });
-};
-
-client.on('message', function(message) {
-    const member = message.member;
-    const mess = message.content.toLowerCase();
-    const args = message.content.split(' ').slice(1).join(' ');
-
-    if (mess.startsWith(prefix + 'play')) {
-        if (!message.member.voiceChannel) return message.channel.send(':no_entry: || **__يجب ان تكون في روم صوتي__**');
-        // if user is not insert the URL or song title
-        if (args.length == 0) {
-            let play_info = new Discord.RichEmbed()
-                .setAuthor(client.user.username, client.user.avatarURL)
-                .setFooter('طلب بواسطة: ' + message.author.tag)
-                .setDescription('**قم بإدراج رابط او اسم الأغنيه**')
-            message.channel.sendEmbed(play_info)
-            return;
-        }
-        if (queue.length > 0 || isPlaying) {
-            getID(args, function(id) {
-                add_to_queue(id);
-                fetchVideoInfo(id, function(err, videoInfo) {
-                    if (err) throw new Error(err);
-                    let play_info = new Discord.RichEmbed()
-                        .setAuthor(client.user.username, client.user.avatarURL)
-                        .addField('تمت إضافةالاغنيه بقائمة الإنتظار', `**
-                          ${videoInfo.title}
-                          **`)
-                        .setColor("#a637f9")
-                        .setFooter('|| ' + message.author.tag)
-                        .setThumbnail(videoInfo.thumbnailUrl)
-                    message.channel.sendEmbed(play_info);
-                    queueNames.push(videoInfo.title);
-                    now_playing.push(videoInfo.title);
-
-                });
-            });
-        }
-        else {
-
-            isPlaying = true;
-            getID(args, function(id) {
-                queue.push('placeholder');
-                playMusic(id, message);
-                fetchVideoInfo(id, function(err, videoInfo) {
-                    if (err) throw new Error(err);
-                    let play_info = new Discord.RichEmbed()
-                        .setAuthor(client.user.username, client.user.avatarURL)
-                        .addField('__**تم التشغيل ✅**__', `**${videoInfo.title}
-                              **`)
-                        .setColor("RANDOM")
-                        .addField(`بواسطه`, message.author.username)
-                        .setThumbnail(videoInfo.thumbnailUrl)
-
-                    // .setDescription('?')
-                    message.channel.sendEmbed(play_info)
-                    message.channel.send(`
-                            **${videoInfo.title}** تم تشغيل `)
-                    // client.user.setGame(videoInfo.title,'https://www.twitch.tv/Abdulmohsen');
-                });
-            });
-        }
-    }
-    else if (mess.startsWith(prefix + 'skip')) {
-        if (!message.member.voiceChannel) return message.channel.send(':no_entry: || **__يجب ان تكون في روم صوتي__**');
-        message.channel.send('`✔`').then(() => {
-            skip_song(message);
-            var server = server = servers[message.guild.id];
-            if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect();
-        });
-    }
-    else if (message.content.startsWith(prefix + 'vol')) {
-        if (!message.member.voiceChannel) return message.channel.send(':no_entry: || **__يجب ان تكون في روم صوتي__**');
-        // console.log(args)
-        if (args > 100) return message.channel.send('1 - 100 || **__لا أكثر ولا أقل__**')
-        if (args < 1) return message.channel.send('1 - 100 || **__لا أكثر ولا أقل__**')
-        dispatcher.setVolume(1 * args / 50);
-        message.channel.sendMessage(`**__ ${dispatcher.volume*50}% مستوى الصوت __**`);
-    }
-    else if (mess.startsWith(prefix + 'pause')) {
-        if (!message.member.voiceChannel) return message.channel.send(':no_entry: || **__يجب ان تكون في روم صوتي__**');
-        message.channel.send('`✔`').then(() => {
-            dispatcher.pause();
-        });
-    }
-    else if (mess.startsWith(prefix + 'resume')) {
-        if (!message.member.voiceChannel) return message.channel.send(':no_entry: || **__يجب ان تكون في روم صوتي__**');
-            message.channel.send('`✔`').then(() => {
-            dispatcher.resume();
-        });
-    }
-    else if (mess.startsWith(prefix + 'stop')) {
-        if (!message.member.voiceChannel) return message.channel.send(':no_entry: || **__يجب ان تكون في روم صوتي__**');
-        message.channel.send('`✔`');
-        var server = server = servers[message.guild.id];
-        if (message.guild.voiceConnection) message.guild.voiceConnection.disconnect();
-    }
-    else if (mess.startsWith(prefix + 'move')) {
-        if (!message.member.voiceChannel) return message.channel.send(':no_entry: || **__يجب ان تكون في روم صوتي__**');
-        message.member.voiceChannel.join().then(message.channel.send(':ok:'));
-    }
-    else if (mess.startsWith(prefix + 'play')) {
-        if (!message.member.voiceChannel) return message.channel.send(':no_entry: || **__يجب ان تكون في روم صوتي__**');
-        if (isPlaying == false) return message.channel.send(':anger: || **__تم التوقيف__**');
-        let playing_now_info = new Discord.RichEmbed()
-            .setAuthor(client.user.username, client.user.avatarURL)
-            .addField('تمت إضافةالاغنيه بقائمة الإنتظار', `**
-                  ${videoInfo.title}
-                  **`)
-            .setColor("RANDOM")
-            .setFooter('طلب بواسطة: ' + message.author.tag)
-            .setThumbnail(videoInfo.thumbnailUrl)
-        //.setDescription('?')
-        message.channel.sendEmbed(playing_now_info);
-    }
-});
-
-function skip_song(message) {
-    if (!message.member.voiceChannel) return message.channel.send(':no_entry: || **__يجب ان تكون في روم صوتي__**');
-    dispatcher.end();
-}
-
-function playMusic(id, message) {
-    voiceChannel = message.member.voiceChannel;
-
-
-    voiceChannel.join().then(function(connectoin) {
-        let stream = ytdl('https://www.youtube.com/watch?v=' + id, {
-            filter: 'audioonly'
-        });
-        skipReq = 0;
-        skippers = [];
-
-        dispatcher = connectoin.playStream(stream);
-        dispatcher.on('end', function() {
-            skipReq = 0;
-            skippers = [];
-            queue.shift();
-            queueNames.shift();
-            if (queue.length === 0) {
-                queue = [];
-                queueNames = [];
-                isPlaying = false;
-            }
-            else {
-                setTimeout(function() {
-                    playMusic(queue[0], message);
-                }, 500);
-            }
-        });
-    });
-}
-
-function getID(str, cb) {
-    if (isYoutube(str)) {
-        cb(getYoutubeID(str));
-    }
-    else {
-        search_video(str, function(id) {
-            cb(id);
-        });
-    }
-}
-
-function add_to_queue(strID) {
-    if (isYoutube(strID)) {
-        queue.push(getYoutubeID(strID));
-    }
-    else {
-        queue.push(strID);
-    }
-}
-
-function search_video(query, cb) {
-    request("https://www.googleapis.com/youtube/v3/search?part=id&type=video&q=" + encodeURIComponent(query) + "&key=" + yt_api_key, function(error, response, body) {
-        var json = JSON.parse(body);
-        cb(json.items[0].id.videoId);
-    });
-}
-
-
-function isYoutube(str) {
-    return str.toLowerCase().indexOf('youtube.com') > -1;
-}
- client.on('message', message => {
-     if (message.content === prefix +"help") {
-    const embed = new Discord.RichEmbed()
-     .setColor("RANDOM")
-     .addField(`**__أوامر البوت__**`,`
-    **${prefix}play**
-   امر تشغيل الأغنية , !شغل الرابط او اسم الأعنية
-    **${prefix}stop**
-        ايقاف الاغنية 
-    **${prefix}skip**
-     امر تخطي الاغنية
-    **${prefix}vol**
-    تغير مستوى الصوت 1 - 100
-       ${prefix}pause**
-      ايقاف الاغنية مؤقتا 
-    **${prefix}resume**
-       امر تكملة الاغنية
-    **${prefix}move**
-   سحب البوت او ادخال البوت الى روم
-   
-     prefix = ${prefix}
-     ping = ${Date.now() - message.createdTimestamp}`)
-
-      message.channel.send({embed});
-     }
-    });
-	
-
-
+let points = JSON.parse(fs.readFileSync('points.json', 'utf8'));
 client.on('message', message => {
-  if (!message.content.startsWith(prefix)) return;
-  var args = message.content.split(' ').slice(1);
-  var argresult = args.join(' ');
-  if (message.author.id !== "324672376455299074") return;
+    if (!points[message.author.id]) points[message.author.id] = {points : 0}
+    if (message.content == 'نقاطي'){
+        var embed = new RichEmbed()
+        .setAuthor(message.author.username,message.author.avatarURL)
+        .addField(`نقاطك : ${points[message.author.id].points}`,   true)
+        .setColor('RANDOM')
+        .setFooter('Nabarat Games', client.user.avatarURL);
+        message.channel.sendEmbed(embed)
+    };
+    if (message.content == "فكك") {    
+        var x = ['ضفدع', 'طيارة', 'ماستر', 'تفكيك', 'تجربة', 'مدرسة', 'معلم' , 'نقاط' , 'انا بحبك' , 'الخليج' , 'مستر بطاطا' , 'نبرات'];
+        var x2 = ['ض ف د ع', 'ط ي ا ر ة', 'م ا س ت ر', 'ت ف ك ي ك', 'ت ج ر ب ة', 'م د ر س ة', 'م ع ل م', 'ن ق ا ط', 'ا ن ا ب ح ب ك', 'ا ل خ ل ي ج', 'م س ت ر ب ط ا ط ا', 'ن ب ر ا ت'];
+        var x3 = Math.floor(Math.random()*x.length)
+        message.channel.send(`فكك الكلمة الآتية :${x[x3]}, لديك 20 ثانية`).then(msg1=> {
+            var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
+                maxMatches : 1,
+                time : 20000,
+                errors : ['time']
+            })
+        r.catch(() => {
+            return message.channel.send('❌ لقد انتهى الوقت ولم يقم أحد بالأجابة بشكل صحيح')
+                    message.channel.sendEmbed(embed)
+        })
+        r.then(s=> {
 
-  
-  if (message.content.startsWith(prefix + 'setwatch')) {
-  client.user.setActivity(argresult, {type: 'WATCHING'})
-     console.log('test' + argresult);
-    message.channel.sendMessage(`Watch Now: **${argresult}`)
-} 
+            points[message.author.id].points +=1
+            message.channel.send(`✅ لقد قمت بكتابة الجواب الصحيح بالوقت المناسب
+ ─═════**{نقاطك:${points[message.author.id].points}}**═════─`);
+               message.channel.sendEmbed(embed)
+        })
+        })
+    }
+    fs.writeFile('points.json', JSON.stringify(points), (err) => {
+        if (err) console.error(err);
+    })
+	    if (message.content == "ركب") {    
+        var x = ['ض ف د ع', 'ط ي ا ر ة', 'م ا س ت ر', 'ت ف ك ي ك', 'ت ج ر ب ة', 'م د ر س ة', 'م ع ل م', 'ن ق ا ط', 'ا ن ا ب ح ب ك', 'ا ل خ ل ي ج', 'م س ت ر ب ط ا ط ا', 'ن ب ر ا ت'];
+		var x2 = ['ضفدع', 'طيارة', 'ماستر', 'تفكيك', 'تجربة', 'مدرسة', 'معلم' , 'نقاط' , 'انا بحبك' , 'الخليج' , 'مستر بطاطا' , 'نبرات'];
+        var x3 = Math.floor(Math.random()*x.length)
+        message.channel.send(`ركب الكلمة  الآتية :${x[x3]}, لديك 20 ثانية`).then(msg1=> {
+            var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
+                maxMatches : 1,
+                time : 20000,
+                errors : ['time']
+            })
+        r.catch(() => {
+            return message.channel.send('❌ لقد انتهى الوقت ولم يقم أحد بالأجابة بشكل صحيح')
+                    message.channel.sendEmbed(embed)
+        })
+        r.then(s=> {
 
- 
-  if (message.content.startsWith(prefix + 'setlis')) {
-  client.user.setActivity(argresult, {type: 'LISTENING'})
-     console.log('test' + argresult);
-    message.channel.sendMessage(`LISTENING Now: **${argresult}`)
-} 
+            points[message.author.id].points +=1
+            message.channel.send(`✅ لقد قمت بكتابة الجواب الصحيح بالوقت المناسب
+ ─═════**{نقاطك:${points[message.author.id].points}}**═════─`);
+               message.channel.sendEmbed(embed)
+        })
+        })
+    }
+    fs.writeFile('points.json', JSON.stringify(points), (err) => {
+        if (err) console.error(err);
+    })
+	    if (message.content == "رياضيات") {    
+        var x = ['50×50', '1000000×1', '89×10', '90×5', '30×3', '10×10', '1000×1000', '44,5+44,5'];
+		var x2 = ['2500', '1000000', '890', '450', '90', '100', '1000000' , '89'];
+        var x3 = Math.floor(Math.random()*x.length)
+        message.channel.send(`ركب الكلمة  الآتية :${x[x3]}, لديك 20 ثانية`).then(msg1=> {
+            var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
+                maxMatches : 1,
+                time : 20000,
+                errors : ['time']
+            })
+        r.catch(() => {
+            return message.channel.send('❌ لقد انتهى الوقت ولم يقم أحد بالأجابة بشكل صحيح')
+                    message.channel.sendEmbed(embed)
+        })
+        r.then(s=> {
 
+            points[message.author.id].points +=1
+            message.channel.send(`✅ لقد قمت بكتابة الجواب الصحيح بالوقت المناسب
+ ─═════**{نقاطك:${points[message.author.id].points}}**═════─`);
+               message.channel.sendEmbed(embed)
+        })
+        })
+    }
+    fs.writeFile('points.json', JSON.stringify(points), (err) => {
+        if (err) console.error(err);
+    })
+	
+  if (message.content == "عواصم") {
+        var x = ['اليمن', 'مصر', 'الجزائر', 'السعودية', 'الصومال', 'العراق' , 'الامارات' , 'سوريا' , 'المغرب'];
+        var x2 = ['صنعاء', 'القاهرة', 'الجزائر', 'الرياض', 'الخرطوم', 'بغداد', 'ابو ظبي','دمشق ','الر باط'];
+        var x3 = Math.floor(Math.random()*x.length)
+        message.channel.send(`ماهي عاصمة :${x[x3]}, لديك 15 ثانية`).then(msg1=> {
+            var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
+                maxMatches : 1, 
+                time : 15000, 
+                errors : ['time'] 
+            })
+        r.catch(() => {
+            return message.channel.send('❌ لقد انتهى الوقت ولم يقم أحد بالأجابة بشكل صحيح') 
+               message.channel.sendEmbed(embed)
+        })
+        r.then(s=> {
 
-if (message.content.startsWith(prefix + 'setname')) {
-  client.user.setUsername(argresult).then
-      message.channel.sendMessage(`Username Changed To **${argresult}**`)
-  return message.reply("You Can change the username 2 times per hour");
-} 
+            points[message.author.id].points +=1
+            message.channel.send(`✅ لقد قمت بكتابة الجواب الصحيح بالوقت المناسب
+ ─═════**{نقاطك:${points[message.author.id].points}}**═════─`);
+               message.channel.sendEmbed(embed)
+        })
+        })
+    }
+    fs.writeFile('points.json', JSON.stringify(points), (err) => {
+        if (err) console.error(err);
+    })
+    if (message.content == "لغز") {
+        var x = ['كلي ثقوب ومع ذلك أحفظ الماء فمن أكون ؟', 'ما هو الشيء الذي يمشي و يقف وليس له أرجـل ؟', 'ما هو الشئ الذي يرفع اثقال ولا يقدر يرفع مسمار ؟', 'يسمع بلا أذن ويتكلم بلا لسان فما هو ؟', 'ماهو الشيء الذي يكتب و لا يقرأ ؟', 'ماهو الشيء الذي يكون اخضر في الارض واسود في السوق واحمــر في البيت ؟', 'عائلة مؤلفة من 6 بنات وأخ لكل منهن، فكم عدد أفراد العائلة ؟', 'يتحرك دائماً حواليك لكنك لاتراه فما هو ؟' ,'ما هو البليون ؟'];
+        var x2 = ['الاسفنج', 'الساعة', 'البحر', 'التلفون', 'العمر', 'الشاي', 'سبعة اشخاص' ,'الهواء' ,'الف مليون'];
+        var x3 = Math.floor(Math.random()*x.length)
+        message.channel.send(`حل اللغز الأتي :${x[x3]}, لديك 20 ثانية`).then(msg1=> {
+            var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
+                maxMatches : 1,
+                time : 20000,
+                errors : ['time']
+            })
+        r.catch(() => {
+            return message.channel.send('❌ لقد انتهى الوقت ولم يقم أحد بالأجابة بشكل صحيح') 
+               message.channel.sendEmbed(embed)
+        })
+        r.then(s=> {
 
-if (message.content.startsWith(prefix + 'setavatar')) {
-  client.user.setAvatar(argresult);
-   message.channel.sendMessage(`Avatar Changed Successfully To **${argresult}**`);
-}
+            points[message.author.id].points +=1
+            message.channel.send(`✅ لقد قمت بكتابة الجواب الصحيح بالوقت المناسب
+ ─═════**{نقاطك:${points[message.author.id].points}}**═════─`);
+               message.channel.sendEmbed(embed)
+        })
+        })
+    }
+    fs.writeFile('points.json', JSON.stringify(points), (err) => {
+        if (err) console.error(err);
+    })
+  if (message.content == "تحدي") {    
+        var x = ['ف ض ع د', 'ص ش خ', 'ة د ا ر ج', 'ا ر ي ة س', 'ي ت ب', 'ئ ا ع ل ة', ' ا ش ي', 'ن ح و ي ا', 'س د و ي ك ر د', 'ر ط ي ا ة' , 'ن ح ز ل و', 'ب ر ن ا ت'];
+        var x2 = ['ضفدع', 'شخص', 'دراجة', 'سيارة', 'بيت', 'عائلة', 'شاي', 'حيوان', 'ديسكورد', 'طيارة', 'حلزون', 'نبرات'];
+        var x3 = Math.floor(Math.random()*x.length)
+        message.channel.send(`عدل الكلمة  الآتية :${x[x3]}, لديك 25 ثانية`).then(msg1=> {
+            var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
+                maxMatches : 1,
+                time : 25000,
+                errors : ['time']
+            })
+        r.catch(() => {
+            return message.channel.send('❌ لقد انتهى الوقت ولم يقم أحد بالأجابة بشكل صحيح')
+                    message.channel.sendEmbed(embed)
+        })
+        r.then(s=> {
 
-if (message.content.startsWith(prefix + 'setstream')) {
-  client.user.setGame(argresult, "https://www.twitch.tv/KiNg66S");
-     console.log('test' + argresult);
-    message.channel.sendMessage(`Streaming: **${argresult}`)
-} 
-if (message.content.startsWith(prefix + 'setplay')) {
-  client.user.setGame(argresult);
-     console.log('test' + argresult);
-    message.channel.sendMessage(`Playing: **${argresult}`)
-} 
-
-
-
-});
-
-
-
-client.login(process.env.BOT_TOKEN);
+            points[message.author.id].points +=1
+            message.channel.send(`✅ لقد قمت بكتابة الجواب الصحيح بالوقت المناسب
+ ─═════**{نقاطك:${points[message.author.id].points}}**═════─`);
+               message.channel.sendEmbed(embed)
+        })
+        })
+    }
+    fs.writeFile('points.json', JSON.stringify(points), (err) => {
+        if (err) console.error(err);
+    });
