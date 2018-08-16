@@ -23,7 +23,7 @@ client.on('message', message => {
         var x = ['ضفدع', 'طيارة', 'ماستر', 'تفكيك', 'تجربة', 'مدرسة', 'معلم' , 'نقاط' , 'انا بحبك' , 'الخليج' , 'مستر بطاطا' , 'نبرات'];
         var x2 = ['ض ف د ع', 'ط ي ا ر ة', 'م ا س ت ر', 'ت ف ك ي ك', 'ت ج ر ب ة', 'م د ر س ة', 'م ع ل م', 'ن ق ا ط', 'ا ن ا ب ح ب ك', 'ا ل خ ل ي ج', 'م س ت ر ب ط ا ط ا', 'ن ب ر ا ت'];
         var x3 = Math.floor(Math.random()*x.length)
-        message.channel.send(`فكك الكلمة الآتية :${x[x3]}, لديك 20 ثانية`).then(msg1=> {
+        message.channel.send(`**فكك**: ${x[x3]} **لديك 20 ثانية**`).then(msg1=> {
             var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
                 maxMatches : 1,
                 time : 20000,
