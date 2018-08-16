@@ -6,6 +6,7 @@ client.on('ready', () => {
 });
 
 
+
 let points = JSON.parse(fs.readFileSync('points.json', 'utf8'));
 client.on('message', message => {
     if (!points[message.author.id]) points[message.author.id] = {points : 0}
@@ -173,5 +174,8 @@ client.on('message', message => {
     }
     fs.writeFile('points.json', JSON.stringify(points), (err) => {
         if (err) console.error(err);
-    });
+    })
+    })
+
+    ;
 client.login(process.env.BOT_TOKEN);
