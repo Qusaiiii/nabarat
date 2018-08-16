@@ -47,7 +47,7 @@ client.on('message', message => {
     })
     if (message.content == "اعلام") {    
         var x = ['علم فلسطين'];
-        var x2 = [':flag_ps:'];
+        var x2 = ['🇵🇸'];
         var x3 = Math.floor(Math.random()*x.length)
         message.channel.send(`**${x[x3]}**`).then(msg1=> {
             var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
