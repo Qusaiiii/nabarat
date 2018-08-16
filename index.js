@@ -45,6 +45,32 @@ client.on('message', message => {
     fs.writeFile('points.json', JSON.stringify(points), (err) => {
         if (err) console.error(err);
     })
+    if (message.content == "اعلام") {    
+        var x = ['علم فلسطين'];
+        var x2 = [':flag_ps:'];
+        var x3 = Math.floor(Math.random()*x.length)
+        message.channel.send(`فكك ← **${x[x3]}**`).then(msg1=> {
+            var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
+                maxMatches : 1,
+                time : 20000,
+                errors : ['time']
+            })
+        r.catch(() => {
+            return message.channel.send('❌ لقد انتهى الوقت ولم يقم أحد بالأجابة بشكل صحيح')
+                    message.channel.sendEmbed(embed)
+        })
+        r.then(s=> {
+
+            points[message.author.id].points +=1
+            message.channel.send(`✅ لقد قمت بكتابة الجواب الصحيح بالوقت المناسب
+ ─═════**{نقاطك:${points[message.author.id].points}}**═════─`);
+               message.channel.sendEmbed(embed)
+        })
+        })
+    }
+    fs.writeFile('points.json', JSON.stringify(points), (err) => {
+        if (err) console.error(err);
+    })
 	    if (message.content == "ركب") {    
         var x = ['ض ف د ع', 'ط ي ا ر ة', 'م ا س ت ر', 'ت ف ك ي ك', 'ت ج ر ب ة', 'م د ر س ة', 'م ع ل م', 'ن ق ا ط', 'ا ن ا ب ح ب ك', 'ا ل خ ل ي ج', 'م س ت ر ب ط ا ط ا', 'ن ب ر ا ت'];
 		var x2 = ['ضفدع', 'طيارة', 'ماستر', 'تفكيك', 'تجربة', 'مدرسة', 'معلم' , 'نقاط' , 'انا بحبك' , 'الخليج' , 'مستر بطاطا' , 'نبرات'];
@@ -178,31 +204,6 @@ client.on('message', message => {
     })
     })
 
-  if (message.content == "اعلام") {
-        var x = ['علم فلسطين'];
-        var x2 = [':flag_ps:'];
-        var x3 = Math.floor(Math.random()*x.length)
-        message.channel.send(`${x[x3]}`).then(msg1=> {
-            var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
-                maxMatches : 1, 
-                time : 15000, 
-                errors : ['time'] 
-            })
-        r.catch(() => {
-            return message.channel.send('❌ لقد انتهى الوقت ولم يقم أحد بالأجابة بشكل صحيح') 
-               message.channel.sendEmbed(embed)
-        })
-        r.then(s=> {
 
-            points[message.author.id].points +=1
-            message.channel.send(`✅ لقد قمت بكتابة الجواب الصحيح بالوقت المناسب
- ─═════**{نقاطك:${points[message.author.id].points}}**═════─`);
-               message.channel.sendEmbed(embed)
-        })
-        })
-    }
-    fs.writeFile('points.json', JSON.stringify(points), (err) => {
-        if (err) console.error(err);
-    })
    
 client.login(process.env.BOT_TOKEN);
