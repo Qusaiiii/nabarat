@@ -49,7 +49,7 @@ client.on('message', message => {
         var x = ['ض ف د ع', 'ط ي ا ر ة', 'م ا س ت ر', 'ت ف ك ي ك', 'ت ج ر ب ة', 'م د ر س ة', 'م ع ل م', 'ن ق ا ط', 'ا ن ا ب ح ب ك', 'ا ل خ ل ي ج', 'م س ت ر ب ط ا ط ا', 'ن ب ر ا ت'];
 		var x2 = ['ضفدع', 'طيارة', 'ماستر', 'تفكيك', 'تجربة', 'مدرسة', 'معلم' , 'نقاط' , 'انا بحبك' , 'الخليج' , 'مستر بطاطا' , 'نبرات'];
         var x3 = Math.floor(Math.random()*x.length)
-        message.channel.send(`ركب الكلمة  الآتية :${x[x3]}, لديك 20 ثانية`).then(msg1=> {
+        message.channel.send(`ركب ← **${x[x3]}**`).then(msg1=> {
             var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
                 maxMatches : 1,
                 time : 20000,
@@ -75,7 +75,7 @@ client.on('message', message => {
         var x = ['50×50', '1000000×1', '89×10', '90×5', '30×3', '10×10', '1000×1000', '44,5+44,5'];
 		var x2 = ['2500', '1000000', '890', '450', '90', '100', '1000000' , '89'];
         var x3 = Math.floor(Math.random()*x.length)
-        message.channel.send(`ركب الكلمة  الآتية :${x[x3]}, لديك 20 ثانية`).then(msg1=> {
+        message.channel.send(`قم بحل المعادلة الاتية:**${x[x3]}*`).then(msg1=> {
             var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
                 maxMatches : 1,
                 time : 20000,
@@ -102,7 +102,7 @@ client.on('message', message => {
         var x = ['اليمن', 'مصر', 'الجزائر', 'السعودية', 'الصومال', 'العراق' , 'الامارات' , 'سوريا' , 'المغرب'];
         var x2 = ['صنعاء', 'القاهرة', 'الجزائر', 'الرياض', 'الخرطوم', 'بغداد', 'ابو ظبي','دمشق ','الر باط'];
         var x3 = Math.floor(Math.random()*x.length)
-        message.channel.send(`ماهي عاصمة :${x[x3]}, لديك 15 ثانية`).then(msg1=> {
+        message.channel.send(`ماهي عاصمة ${x[x3]}`).then(msg1=> {
             var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
                 maxMatches : 1, 
                 time : 15000, 
@@ -128,7 +128,7 @@ client.on('message', message => {
         var x = ['كلي ثقوب ومع ذلك أحفظ الماء فمن أكون ؟', 'ما هو الشيء الذي يمشي و يقف وليس له أرجـل ؟', 'ما هو الشئ الذي يرفع اثقال ولا يقدر يرفع مسمار ؟', 'يسمع بلا أذن ويتكلم بلا لسان فما هو ؟', 'ماهو الشيء الذي يكتب و لا يقرأ ؟', 'ماهو الشيء الذي يكون اخضر في الارض واسود في السوق واحمــر في البيت ؟', 'عائلة مؤلفة من 6 بنات وأخ لكل منهن، فكم عدد أفراد العائلة ؟', 'يتحرك دائماً حواليك لكنك لاتراه فما هو ؟' ,'ما هو البليون ؟'];
         var x2 = ['الاسفنج', 'الساعة', 'البحر', 'التلفون', 'العمر', 'الشاي', 'سبعة اشخاص' ,'الهواء' ,'الف مليون'];
         var x3 = Math.floor(Math.random()*x.length)
-        message.channel.send(`حل اللغز الأتي :${x[x3]}, لديك 20 ثانية`).then(msg1=> {
+        message.channel.send(`اللغز يقول: **${x[x3]}*`).then(msg1=> {
             var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
                 maxMatches : 1,
                 time : 20000,
@@ -154,7 +154,7 @@ client.on('message', message => {
         var x = ['ف ض ع د', 'ص ش خ', 'ة د ا ر ج', 'ا ر ي ة س', 'ي ت ب', 'ئ ا ع ل ة', ' ا ش ي', 'ن ح و ي ا', 'س د و ي ك ر د', 'ر ط ي ا ة' , 'ن ح ز ل و', 'ب ر ن ا ت'];
         var x2 = ['ضفدع', 'شخص', 'دراجة', 'سيارة', 'بيت', 'عائلة', 'شاي', 'حيوان', 'ديسكورد', 'طيارة', 'حلزون', 'نبرات'];
         var x3 = Math.floor(Math.random()*x.length)
-        message.channel.send(`عدل الكلمة  الآتية :${x[x3]}, لديك 25 ثانية`).then(msg1=> {
+        message.channel.send(`عدل الكلمة  الآتية: ${x[x3]}`).then(msg1=> {
             var r = message.channel.awaitMessages(msg => msg.content == x2[x3], {
                 maxMatches : 1,
                 time : 25000,
