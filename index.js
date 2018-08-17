@@ -206,7 +206,7 @@ client.on('message', message => {
     })
 
  client.on('message', message => {
-     if (message.content === prefix +"مساعدة") {
+     if (message.content === "-مساعدة") {
     const embed = new Discord.RichEmbed()
      .setColor("RANDOM")
      .addField(`**__أوامر البوت__**`,`
