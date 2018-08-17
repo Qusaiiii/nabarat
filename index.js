@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const fs = require('fs');
+const prefix = '-'
 const client = new Discord.Client();
 
 client.on('ready', () => {
